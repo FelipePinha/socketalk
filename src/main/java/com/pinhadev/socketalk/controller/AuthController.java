@@ -1,6 +1,7 @@
 package com.pinhadev.socketalk.controller;
 
 import com.pinhadev.socketalk.dto.AuthResponse;
+import com.pinhadev.socketalk.dto.LoginRequest;
 import com.pinhadev.socketalk.dto.RegisterRequest;
 import com.pinhadev.socketalk.service.AuthService;
 import jakarta.validation.Valid;
@@ -26,5 +27,12 @@ public class AuthController {
         AuthResponse token = authService.registerUser(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(token);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        AuthResponse token = authService.login(request);
+
+        return ResponseEntity.ok().body(token);
     }
 }
