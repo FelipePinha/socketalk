@@ -4,11 +4,13 @@ import com.pinhadev.socketalk.config.JwtService;
 import com.pinhadev.socketalk.dto.AuthResponse;
 import com.pinhadev.socketalk.dto.LoginRequest;
 import com.pinhadev.socketalk.dto.RegisterRequest;
+import com.pinhadev.socketalk.exception.ConflictException;
+import com.pinhadev.socketalk.exception.ResourceNotFoundException;
+import com.pinhadev.socketalk.exception.UnauthorizedException;
 import com.pinhadev.socketalk.model.User;
 import com.pinhadev.socketalk.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -32,11 +34,11 @@ public class AuthService implements UserDetailsService {
         var existsEmail = userRepository.existsByEmail(request.email());
 
         if(existsUsername) {
-            throw new RuntimeException("Nome de usuário já está em uso");
+            throw new ConflictException("Nome de usuário já está em uso");
         }
 
         if(existsEmail) {
-            throw new RuntimeException("Já existe uma conta com este email");
+            throw new ConflictException("Já existe uma conta com este email");
         }
 
         var passwordHash = encoder.encode(request.password());
@@ -55,10 +57,10 @@ public class AuthService implements UserDetailsService {
 
     public AuthResponse login(LoginRequest request) {
         var user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException(INVALID_CREDENTIALS));
+                .orElseThrow(() -> new UnauthorizedException(INVALID_CREDENTIALS));
 
         if (!encoder.matches(request.password(), user.getPassword())) {
-            throw new RuntimeException(INVALID_CREDENTIALS);
+            throw new UnauthorizedException(INVALID_CREDENTIALS);
         }
 
         var token = jwtService.generateToken(user.getEmail());
@@ -67,7 +69,7 @@ public class AuthService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
+    public UserDetails loadUserByUsername(String email) throws ResourceNotFoundException {
+        return userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
     }
 }
